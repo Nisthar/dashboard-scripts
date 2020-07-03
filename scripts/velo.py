@@ -62,6 +62,19 @@ if "http" in password:
 
 r = session.get(host+"/purchase?password="+password, headers=headers)
 
+if "currently in line" in r.text:
+    session.cookies.set("queue_session", r.cookies.get_dict()["queue_session"])
+    print("In Queue")
+    while True:
+        r = session.get(host+"/purchase/queue", headers=headers)
+        print(r.text)
+        if r.text == '{"success":true,"status":"Through queue","passed":true}':
+            print("Passed Queue")
+            session.cookies.set("queue_session", r.cookies.get_dict()["queue_session"])
+            r = session.get(host+"/purchase?password="+password, headers=headers)
+            break
+        time.sleep(10)
+
 headers["password"] = password
 
 r = session.get(host+"/purchase/create",headers=headers)
