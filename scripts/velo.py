@@ -1,6 +1,7 @@
 import requests
 import json
 import random
+import time
 
 session = requests.session()
 
@@ -25,7 +26,7 @@ hostShort = host.split("//")[1]
 
 if host.count("/") == 3:
     host = host[:-1]
-
+    
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
 }
@@ -75,9 +76,13 @@ if "currently in line" in r.text:
             break
         time.sleep(10)
 
+stripeKey = "pk_live" + r.text.split("Stripe('pk_live")[1].split("');")[0]
+print(stripeKey)
+
 headers["password"] = password
 
 r = session.get(host+"/purchase/create",headers=headers)
+print(r.text)
 stripeSessionId = json.loads(r.text)["checkout"]
 
 r = session.get("https://checkout.stripe.com/pay/"+stripeSessionId, headers=headers)
@@ -97,13 +102,13 @@ data = {
     'card[exp_year]': billingCardYear,
     'payment_user_agent': 'stripe.js/ddb1e7a0; stripe-js-v3/ddb1e7a0; checkout',
     'time_on_page': str(random.randint(240000,340000)),
-    'key': 'pk_live_Pet04NDOr1rwy3321NaTRDBA00iFba9lXq'
+    'key': stripeKey
 }
 r = session.post("https://api.stripe.com/v1/payment_methods", data=data, headers=headers)
 stripePaymentId = json.loads(r.text)["id"]
 
 params = {
-    "key": "pk_live_Pet04NDOr1rwy3321NaTRDBA00iFba9lXq",
+    "key": stripeKey,
     "session_id": stripeSessionId
 }
 r = session.get("https://api.stripe.com/v1/payment_pages", params=params, headers=headers)
@@ -111,7 +116,7 @@ paymentPageId = json.loads(r.text)["id"]
 
 data = {
     "payment_method": stripePaymentId,
-    "key": "pk_live_Pet04NDOr1rwy3321NaTRDBA00iFba9lXq"
+    "key": stripeKey
 }
 r = session.post("https://api.stripe.com/v1/payment_pages/"+paymentPageId+"/confirm", data=data, headers=headers)
 if "card_declined" in r.text:
