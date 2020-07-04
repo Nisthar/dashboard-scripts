@@ -65,6 +65,8 @@ if "http" in password:
 else:
     r = session.get(host+"?password="+password, headers=headers)
 
+stripeKey = "pk_live" + r.text.split("Stripe('pk_live")[1].split("');")[0]
+
 r = session.post(host+"/payment_methods", headers=headers)
 
 stripeSessionId = r.text.split("sessionId: '")[1].split("'")[0]
@@ -87,13 +89,13 @@ data = {
     'card[exp_year]': billingCardYear,
     'payment_user_agent': 'stripe.js/ddb1e7a0; stripe-js-v3/ddb1e7a0; checkout',
     'time_on_page': str(random.randint(240000,340000)),
-    'key': 'pk_live_BAfoB6RFoOUiwWx6tDelkD4y00mZls4N8g'
+    'key': stripeKey
 }
 r = session.post("https://api.stripe.com/v1/payment_methods", data=data, headers=headers)
 stripePaymentId = json.loads(r.text)["id"]
 
 params = {
-    "key": "pk_live_BAfoB6RFoOUiwWx6tDelkD4y00mZls4N8g",
+    "key": stripeKey,
     "session_id": stripeSessionId
 }
 r = session.get("https://api.stripe.com/v1/payment_pages", params=params, headers=headers)
@@ -101,7 +103,7 @@ paymentPageId = json.loads(r.text)["id"]
 
 data = {
     "payment_method": stripePaymentId,
-    "key": "pk_live_BAfoB6RFoOUiwWx6tDelkD4y00mZls4N8g"
+    "key": stripeKey
 }
 r = session.post("https://api.stripe.com/v1/payment_pages/"+paymentPageId+"/confirm", data=data, headers=headers)
 if "card_declined" in r.text:
